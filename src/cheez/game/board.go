@@ -34,13 +34,13 @@ func getTileColor(x, y uint8) pixel.RGBA {
 	return pixel.RGB(0.568627450980392, 0.631372549019608, 0.741176470588235)
 }
 
-func (c *Game) drawTileBackground(x, y uint8) {
+func (g *Game) drawTileBackground(x, y uint8) {
 	offsetX, offsetY := getOffset(x, y)
 
-	c.imd.Color = getTileColor(x, y)
-	c.imd.Push(pixel.V(offsetX, offsetY))
-	c.imd.Push(pixel.V(offsetX+tileSize, offsetY+tileSize))
-	c.imd.Rectangle(0)
+	g.imd.Color = getTileColor(x, y)
+	g.imd.Push(pixel.V(offsetX, offsetY))
+	g.imd.Push(pixel.V(offsetX+tileSize, offsetY+tileSize))
+	g.imd.Rectangle(0)
 }
 
 func (g *Game) drawFigure(x, y uint8) {
@@ -48,7 +48,12 @@ func (g *Game) drawFigure(x, y uint8) {
 	figure := g.Engine.GetPiece(x, y)
 
 	if sprite, ok := g.sprites[figure]; ok {
-		sprite.Draw(g.spriteCanvas, pixel.IM.Moved(pixel.V(offsetX+halfSize, offsetY+halfSize)))
+		p := pixel.V(offsetX+halfSize, offsetY+halfSize)
+		if g.state.isDragging(x, y) {
+			p = g.relativeMousePos()
+		}
+
+		sprite.Draw(g.spriteCanvas, pixel.IM.Moved(p))
 	}
 }
 
@@ -64,16 +69,25 @@ func (c *Game) highlightTile() {
 	}
 }
 
-func (c *Game) drawBoard() {
+func (g *Game) drawDraggingPiece() {
+	if g.state.draggingTile != 255 {
+		x, y := reverseTileInt(g.state.draggingTile)
+		g.drawFigure(x, y)
+	}
+}
+
+func (g *Game) drawBoard() {
 	for y := uint8(0); y < 8; y++ {
 		for x := uint8(0); x < 8; x++ {
-
-			c.drawTileBackground(x, y)
-			if c.Engine.GetPiece(x, y) != 0 && !c.state.isDragging(x, y) {
-				c.drawFigure(x, y)
+			g.drawTileBackground(x, y)
+			if g.Engine.GetPiece(x, y) != 0 && !g.state.isDragging(x, y) {
+				g.drawFigure(x, y)
 			}
 		}
 	}
 
-	c.highlightTile()
+	g.highlightTile()
+
+	// always draw it last so it stays on top
+	g.drawDraggingPiece()
 }

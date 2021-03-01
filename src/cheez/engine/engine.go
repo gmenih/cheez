@@ -1,16 +1,9 @@
 package engine
 
-import "time"
-
-// Tile represents X and Y on the board
-type Tile struct {
-	X uint8
-	Y uint8
-}
-
-func T(x, y uint8) Tile {
-	return Tile{x, y}
-}
+import (
+	"fmt"
+	"time"
+)
 
 // Engine is the Chess game engine of Cheez
 type Engine struct {
@@ -41,11 +34,35 @@ func NewEngine(duration time.Duration) *Engine {
 }
 
 func (e *Engine) isValidMove(from, to Tile) bool {
-	return false
+	if from.Equals(to) {
+		return false
+	}
+
+	pieceFrom := e.GetTile(from)
+	pieceTo := e.GetTile(to)
+
+	fmt.Printf("%v", pieceFrom.GetColor() == Light)
+
+	if pieceFrom.GetColor() != e.UpNext {
+		return false
+	}
+
+	if pieceTo != 0 && pieceFrom.SameColor(pieceTo) {
+		return false
+	}
+
+	return true
 }
 
+// GetPiece returns a piece from the X, Y tile
 func (e *Engine) GetPiece(x, y uint8) Piece {
 	return e.board[x][y]
+}
+
+// GetTile returns a piece from X, Y tile
+// but the input is Tile
+func (e *Engine) GetTile(tile Tile) Piece {
+	return e.GetPiece(tile.X, tile.Y)
 }
 
 // GetValidMoves returns all valid moves that can be made on a specific tile,
@@ -70,5 +87,8 @@ func (e *Engine) MovePiece(from, to Tile) bool {
 		e.UpNext = Dark
 	}
 
-	return false
+	e.board[to.X][to.Y] = e.board[from.X][from.Y]
+	e.board[from.X][from.Y] = 0
+
+	return true
 }

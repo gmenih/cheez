@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gmenih341/gess/src/cheez/game"
+	"gmenih341/cheez/src/cheez/game"
 	"time"
 
 	"github.com/faiface/pixel"

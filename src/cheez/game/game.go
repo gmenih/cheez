@@ -2,13 +2,15 @@ package game
 
 import (
 	"fmt"
-	"gmenih341/gess/src/cheez/engine"
+	"gmenih341/cheez/src/cheez/engine"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 )
 
 type Game struct {
@@ -19,6 +21,7 @@ type Game struct {
 	canvas       *pixelgl.Canvas
 	imd          *imdraw.IMDraw
 	spriteCanvas *pixelgl.Canvas
+	atlas        *text.Atlas
 	sprites      map[engine.Piece]*pixel.Sprite
 	window       *pixelgl.Window
 }
@@ -33,27 +36,32 @@ func NewGame(win *pixelgl.Window) *Game {
 		pixelgl.NewCanvas(bounds),
 		imdraw.New(nil),
 		pixelgl.NewCanvas(bounds),
+		text.NewAtlas(basicfont.Face7x13, text.ASCII),
 		loadCheezAssets(),
 		win,
 	}
 }
 
-func (c *Game) handleMouse() {
-	relativePosition := c.window.Bounds().Center().Sub(c.canvas.Bounds().Center())
-	x, y := getTileFromMousePosition(c.window.MousePosition().Sub(relativePosition))
+func (g *Game) relativeMousePos() pixel.Vec {
+	relativePosition := g.window.Bounds().Center().Sub(g.canvas.Bounds().Center())
+	return g.window.MousePosition().Sub(relativePosition)
+}
+
+func (g *Game) handleMouse() {
+	x, y := getTileFromMousePosition(g.relativeMousePos())
 
 	if x == 255 && y == 255 {
 		return
 	}
 
-	c.state.highlightTile(x, y)
+	g.state.highlightTile(x, y)
 
-	if c.window.JustPressed(pixelgl.MouseButton1) {
-		c.pickUpFigure(x, y)
+	if g.window.JustPressed(pixelgl.MouseButton1) {
+		g.pickUpFigure(x, y)
 	}
 
-	if c.window.JustReleased(pixelgl.MouseButton1) {
-		c.dropFigure(x, y)
+	if g.window.JustReleased(pixelgl.MouseButton1) {
+		g.dropFigure(x, y)
 	}
 }
 

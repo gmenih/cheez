@@ -6,12 +6,12 @@ type Piece uint8
 // All pieces. To get white or black, we have to do Light | Pawn, Dark | Pawn, etc...
 // the pieces should also roughly represent their value
 const (
-	Pawn   Piece = 1
-	Bishop Piece = 2
-	Knight Piece = 3
-	Rook   Piece = 4
-	Queen  Piece = 6
-	King   Piece = 8
+	Pawn   Piece = 1 // 1
+	Bishop Piece = 2 // 01
+	Knight Piece = 3 // 11
+	Rook   Piece = 4 // 001
+	Queen  Piece = 6 // 011
+	King   Piece = 8 // 111
 
 	Dark  Piece = 0x20
 	Light Piece = 0x10
@@ -19,10 +19,14 @@ const (
 
 // GetPlain removes the color from the piece, only returning the first 3 bits
 func (p Piece) GetPlain() Piece {
-	return p & 0b111
+	return p & 0xf
 }
 
 // GetColor returns the color of the piece
 func (p Piece) GetColor() Piece {
-	return p >> 3
+	return p & 0xf0
+}
+
+func (p Piece) SameColor(p2 Piece) bool {
+	return p.GetColor() == p2.GetColor()
 }

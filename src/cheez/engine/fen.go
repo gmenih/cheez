@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // FENString is a type alias for FENString
 type FENString string
 
@@ -36,6 +38,7 @@ func (f FENString) Parse() Board {
 	board := Board{}
 	// op := piecePlacement
 	var x, y uint8
+	y = 7
 
 	for _, r := range f {
 		if r == ' ' {
@@ -44,7 +47,7 @@ func (f FENString) Parse() Board {
 		}
 		if r == '/' {
 			x = 0
-			y++
+			y--
 			continue
 		}
 
@@ -59,6 +62,7 @@ func (f FENString) Parse() Board {
 		}
 
 		if v, ok := piecesMap[r]; ok {
+			fmt.Printf("Setting %d to %d %d\n", v, x, y)
 			board[x][y] = v
 			x++
 		}
