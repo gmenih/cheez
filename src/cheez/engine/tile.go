@@ -15,3 +15,10 @@ func T(x, y uint8) Tile {
 func (t Tile) Equals(t2 Tile) bool {
 	return t.X == t2.X && t.Y == t2.Y
 }
+
+func (t Tile) Add(dX, dY int8) Tile {
+	return Tile{
+		uint8(int8(t.X) + dX),
+		uint8(int8(t.Y) + dY),
+	}
+}

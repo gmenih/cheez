@@ -61,14 +61,29 @@ func (e *Engine) GetPiece(x, y uint8) Piece {
 
 // GetTile returns a piece from X, Y tile
 // but the input is Tile
-func (e *Engine) GetTile(tile Tile) Piece {
-	return e.GetPiece(tile.X, tile.Y)
+func (e *Engine) GetTile(t Tile) Piece {
+	return e.GetPiece(uint8(t.X), uint8(t.Y))
 }
 
 // GetValidMoves returns all valid moves that can be made on a specific tile,
 // based on what Piece is on that tile
 func (e *Engine) GetValidMoves(v Tile) []Tile {
-	return []Tile{}
+	// moves := []Tile{}
+
+	// piece := e.GetTile(v)
+	// if piece == 0 {
+	// 	return moves
+	// }
+
+	// // if piece is pinned, return moves
+	// // determine piece type
+	// // determine move pattern
+	// // if move off the grid, not valid
+	// // if move blocked by own peice, not valid
+	// // if move blocked by enemy piece, valid but end search
+
+	// return moves
+	return append([]Tile{}, append(e.movesInLine(v), e.movesDiagonally(v)...)...)
 }
 
 // MovePiece performs a move of a Piece on Board

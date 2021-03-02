@@ -57,15 +57,15 @@ func (g *Game) drawFigure(x, y uint8) {
 	}
 }
 
-func (c *Game) highlightTile() {
-	x, y := reverseTileInt(c.state.hoveredTile)
+func (g *Game) highlightTile() {
+	x, y := reverseTileInt(g.state.hoveredTile)
 	if x != 255 && y != 255 {
 		offsetX, offsetY := getOffset(x, y)
 
-		c.imd.Color = colornames.Darkviolet
-		c.imd.Push(pixel.V(offsetX, offsetY))
-		c.imd.Push(pixel.V(offsetX+tileSize, offsetY+tileSize))
-		c.imd.Rectangle(3)
+		g.imd.Color = colornames.Darkviolet
+		g.imd.Push(pixel.V(offsetX, offsetY))
+		g.imd.Push(pixel.V(offsetX+tileSize, offsetY+tileSize))
+		g.imd.Rectangle(3)
 	}
 }
 
@@ -87,6 +87,14 @@ func (g *Game) drawBoard() {
 	}
 
 	g.highlightTile()
+
+	for _, t := range g.state.validMoves {
+		offsetX, offsetY := getOffset(t.X, t.Y)
+
+		g.imd.Color = pixel.RGB(0, 0, 0).Add(pixel.Alpha(0.5))
+		g.imd.Push(pixel.V(offsetX+halfSize, offsetY+halfSize))
+		g.imd.Circle(10, 0)
+	}
 
 	// always draw it last so it stays on top
 	g.drawDraggingPiece()

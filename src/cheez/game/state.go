@@ -1,5 +1,7 @@
 package game
 
+import "gmenih341/cheez/src/cheez/engine"
+
 type tileInt uint8
 
 func getTileInt(x, y uint8) tileInt {
@@ -19,6 +21,7 @@ func reverseTileInt(ti tileInt) (uint8, uint8) {
 type gameState struct {
 	draggingTile tileInt
 	hoveredTile  tileInt
+	validMoves   []engine.Tile
 }
 
 func newState() *gameState {
@@ -37,6 +40,10 @@ func (s *gameState) resetDragging() (uint8, uint8) {
 	s.draggingTile = 255
 
 	return x, y
+}
+
+func (s *gameState) setValidMoves(tiles []engine.Tile) {
+	s.validMoves = tiles
 }
 
 func (s *gameState) isDragging(x, y uint8) bool {
