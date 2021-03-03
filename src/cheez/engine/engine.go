@@ -83,7 +83,7 @@ func (e *Engine) GetValidMoves(v Tile) []Tile {
 	// // if move blocked by enemy piece, valid but end search
 
 	// return moves
-	return append([]Tile{}, append(e.movesInLine(v), e.movesDiagonally(v)...)...)
+	return e.getMovesOnTile(v)
 }
 
 // MovePiece performs a move of a Piece on Board
