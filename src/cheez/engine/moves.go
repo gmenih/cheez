@@ -37,6 +37,27 @@ func knightPredicate(t Tile, _ int8) []Tile {
 	}
 }
 
+func makeForwardPredicate(p Piece) predicateFn {
+	color := p.GetColor()
+	dir := int8(1)
+	if color == Dark {
+		dir = -1
+	}
+
+	return func(t Tile, _ int8) []Tile {
+		moves := []Tile{
+			t.Add(0, dir),
+		}
+
+		if dir == 1 && t.Y == 1 || dir == -1 && t.Y == 6 {
+			moves = append(moves, t.Add(0, dir*2))
+		}
+
+		return moves
+	}
+
+}
+
 func joinPredicate(predicates ...predicateFn) predicateFn {
 	return func(t Tile, i int8) []Tile {
 		moves := []Tile{}
@@ -52,7 +73,7 @@ func (e Engine) getMoves(t Tile, maxDistance int8, predicate predicateFn) []Tile
 	blockedDirections := map[int]bool{}
 	sourceColor := e.GetTile(t).GetColor()
 
-	for i := int8(1); i < maxDistance; i++ {
+	for i := int8(1); i <= maxDistance; i++ {
 		directions := predicate(t, i)
 
 		for i, direction := range directions {
@@ -83,15 +104,17 @@ func (e Engine) getMovesOnTile(tile Tile) []Tile {
 
 	switch figure.GetPlain() {
 	case Knight:
-		return e.getMoves(tile, 2, knightPredicate)
-	case Rook:
-		return e.getMoves(tile, 8, linearPredicate)
-	case Bishop:
-		return e.getMoves(tile, 8, diagonalPredicate)
+		return e.getMoves(tile, 1, knightPredicate)
 	case King:
-		return e.getMoves(tile, 2, joinPredicate(linearPredicate, diagonalPredicate))
+		return e.getMoves(tile, 1, joinPredicate(linearPredicate, diagonalPredicate))
+	case Rook:
+		return e.getMoves(tile, 7, linearPredicate)
+	case Bishop:
+		return e.getMoves(tile, 7, diagonalPredicate)
 	case Queen:
-		return e.getMoves(tile, 8, joinPredicate(linearPredicate, diagonalPredicate))
+		return e.getMoves(tile, 7, joinPredicate(linearPredicate, diagonalPredicate))
+	case Pawn:
+		return e.getMoves(tile, 1, makeForwardPredicate(figure.GetColor()))
 	}
 
 	return []Tile{}
