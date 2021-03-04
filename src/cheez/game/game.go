@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"gmenih341/cheez/src/cheez/engine"
-	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
@@ -30,7 +29,8 @@ func NewGame(win *pixelgl.Window) *Game {
 	size := float64(8) * tileSize
 	bounds := pixel.R(0, 0, size, size)
 	return &Game{
-		engine.NewEngine(time.Minute * 5),
+		engine.FENString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").ParseToEngine(),
+
 		newState(),
 
 		pixelgl.NewCanvas(bounds),
@@ -91,6 +91,7 @@ func (c *Game) Draw() {
 func (g *Game) pickUpFigure(x, y uint8) {
 	fmt.Println("Picking up", x, y)
 	g.state.setDragging(x, y)
+	fmt.Println(g.Engine.Board.ToString())
 }
 
 func (g *Game) dropFigure(x, y uint8) {

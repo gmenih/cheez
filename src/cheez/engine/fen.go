@@ -1,5 +1,7 @@
 package engine
 
+import "time"
+
 // FENString is a type alias for FENString
 type FENString string
 
@@ -31,9 +33,10 @@ var piecesMap map[rune]Piece = map[rune]Piece{
 	'R': Light | Rook,
 }
 
-// Parse parses the FEN string into a Board
-func (f FENString) Parse() Board {
+// ParseToEngine parses the FEN string into a Board
+func (f FENString) ParseToEngine() *Engine {
 	board := Board{}
+	toPlay := Light
 	op := piecePlacement
 	var x, y uint8
 	y = 7
@@ -46,9 +49,9 @@ func (f FENString) Parse() Board {
 
 		if op == upNext {
 			if r == 'w' {
-
+				toPlay = Light
 			} else if r == 'b' {
-
+				toPlay = Dark
 			}
 		}
 
@@ -74,5 +77,11 @@ func (f FENString) Parse() Board {
 		}
 	}
 
-	return board
+	return &Engine{
+		Board:       board,
+		UpNext:      toPlay,
+		MoveCount:   0,
+		MoveHistory: "",
+		Timers:      [2]time.Duration{},
+	}
 }

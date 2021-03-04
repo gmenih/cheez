@@ -6,8 +6,8 @@ import (
 
 // Engine is the Chess game engine of Cheez
 type Engine struct {
-	// board is the representation of current state of game
-	board Board
+	// Board is the representation of current state of game
+	Board Board
 
 	// MoveCount tells us how many moves there are
 	MoveCount uint
@@ -21,10 +21,10 @@ type Engine struct {
 	Timers [2]time.Duration
 }
 
-// NewEngine returns a new instance of Engine
+// NewEngine returns a new game with empty board
 func NewEngine(duration time.Duration) *Engine {
 	return &Engine{
-		board:       NewGameFENString.Parse(),
+		Board:       Board{},
 		MoveCount:   0,
 		MoveHistory: "",
 		UpNext:      Light,
@@ -32,21 +32,14 @@ func NewEngine(duration time.Duration) *Engine {
 	}
 }
 
-func (e *Engine) isValidMove(from, to Tile) bool {
-	moves := e.GetValidMoves(from)
-
-	for _, t := range moves {
-		if t.Equals(to) {
-			return true
-		}
-	}
-
-	return false
+// SetBoard sets the game board
+func (e *Engine) SetBoard(board Board) {
+	e.Board = board
 }
 
 // GetPiece returns a piece from the X, Y tile
 func (e *Engine) GetPiece(x, y uint8) Piece {
-	return e.board[x][y]
+	return e.Board[x][y]
 }
 
 // GetTile returns a piece from X, Y tile
@@ -71,8 +64,8 @@ func (e *Engine) MovePiece(from, to Tile) bool {
 		e.UpNext = Dark
 	}
 
-	e.board[to.X][to.Y] = e.board[from.X][from.Y]
-	e.board[from.X][from.Y] = 0
+	e.Board[to.X][to.Y] = e.Board[from.X][from.Y]
+	e.Board[from.X][from.Y] = 0
 
 	return true
 }

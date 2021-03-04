@@ -1,5 +1,7 @@
 package engine
 
+import "unicode"
+
 // Piece is a single game piece
 type Piece uint8
 
@@ -37,4 +39,35 @@ func (p Piece) IsDark() bool {
 
 func (p Piece) IsLight() bool {
 	return p.GetColor() == Light
+}
+
+func (p Piece) ToRune() rune {
+	v := '.'
+
+	switch p.GetPlain() {
+	case King:
+		v = 'k'
+		break
+	case Queen:
+		v = 'q'
+		break
+	case Pawn:
+		v = 'p'
+		break
+	case Bishop:
+		v = 'b'
+		break
+	case Rook:
+		v = 'r'
+		break
+	case Knight:
+		v = 'n'
+		break
+	}
+
+	if p.GetColor() == Light {
+		v = unicode.ToUpper(v)
+	}
+
+	return v
 }

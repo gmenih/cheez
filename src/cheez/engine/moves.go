@@ -121,6 +121,18 @@ func (e Engine) getPawnMoves(t Tile) []Tile {
 	return moves
 }
 
+func (e *Engine) isValidMove(from, to Tile) bool {
+	moves := e.GetValidMoves(from)
+
+	for _, t := range moves {
+		if t.Equals(to) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // GetValidMoves returns all valid moves that can be made on a specific tile,
 // based on what Piece is on that tile
 func (e *Engine) GetValidMoves(tile Tile) []Tile {
@@ -130,6 +142,7 @@ func (e *Engine) GetValidMoves(tile Tile) []Tile {
 	// * handle en-passant
 	// * handle pinning
 	// * handle check (only unpin, king moves allowed)
+	// * handle castling
 
 	if figure.GetColor() == e.UpNext {
 		switch figure.GetPlain() {
