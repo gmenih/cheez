@@ -58,14 +58,12 @@ func (g *Game) handleMouse() {
 
 	if g.window.JustPressed(pixelgl.MouseButton1) {
 		g.pickUpFigure(x, y)
+		g.state.setValidMoves(g.Engine.GetValidMoves(engine.T(x, y)))
 	}
 
 	if g.window.JustReleased(pixelgl.MouseButton1) {
 		g.dropFigure(x, y)
-	}
-
-	if g.window.JustReleased(pixelgl.MouseButton2) {
-		g.state.setValidMoves(g.Engine.GetValidMoves(engine.T(x, y)))
+		g.state.setValidMoves([]engine.Tile{})
 	}
 }
 

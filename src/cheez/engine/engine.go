@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -34,24 +33,15 @@ func NewEngine(duration time.Duration) *Engine {
 }
 
 func (e *Engine) isValidMove(from, to Tile) bool {
-	if from.Equals(to) {
-		return false
+	moves := e.GetValidMoves(from)
+
+	for _, t := range moves {
+		if t.Equals(to) {
+			return true
+		}
 	}
 
-	pieceFrom := e.GetTile(from)
-	pieceTo := e.GetTile(to)
-
-	fmt.Printf("%v", pieceFrom.GetColor() == Light)
-
-	if pieceFrom.GetColor() != e.UpNext {
-		return false
-	}
-
-	if pieceTo != 0 && pieceFrom.SameColor(pieceTo) {
-		return false
-	}
-
-	return true
+	return false
 }
 
 // GetPiece returns a piece from the X, Y tile
@@ -67,23 +57,33 @@ func (e *Engine) GetTile(t Tile) Piece {
 
 // GetValidMoves returns all valid moves that can be made on a specific tile,
 // based on what Piece is on that tile
-func (e *Engine) GetValidMoves(v Tile) []Tile {
-	// moves := []Tile{}
+func (e *Engine) GetValidMoves(tile Tile) []Tile {
+	figure := e.GetTile(tile)
 
-	// piece := e.GetTile(v)
-	// if piece == 0 {
-	// 	return moves
-	// }
+	// TODO:
+	// * handle en-passant
+	// * handle pawn takes
+	// * handle pinning
+	// * handle check (only unpin, king moves allowed)
 
-	// // if piece is pinned, return moves
-	// // determine piece type
-	// // determine move pattern
-	// // if move off the grid, not valid
-	// // if move blocked by own peice, not valid
-	// // if move blocked by enemy piece, valid but end search
+	if figure.GetColor() == e.UpNext {
+		switch figure.GetPlain() {
+		case Pawn:
+			return e.getPawnMoves(tile)
+		case Knight:
+			return e.getMoves(tile, 1, knightMover)
+		case King:
+			return e.getMoves(tile, 1, joinPredicate(linearMover, diagonalMover))
+		case Rook:
+			return e.getMoves(tile, 7, linearMover)
+		case Bishop:
+			return e.getMoves(tile, 7, diagonalMover)
+		case Queen:
+			return e.getMoves(tile, 7, joinPredicate(linearMover, diagonalMover))
+		}
+	}
 
-	// return moves
-	return e.getMovesOnTile(v)
+	return []Tile{}
 }
 
 // MovePiece performs a move of a Piece on Board

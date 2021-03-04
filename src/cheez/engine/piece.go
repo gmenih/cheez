@@ -30,3 +30,11 @@ func (p Piece) GetColor() Piece {
 func (p Piece) SameColor(p2 Piece) bool {
 	return p.GetColor() == p2.GetColor()
 }
+
+func (p Piece) IsDark() bool {
+	return p.GetColor() == Dark
+}
+
+func (p Piece) IsLight() bool {
+	return p.GetColor() == Light
+}

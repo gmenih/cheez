@@ -1,12 +1,12 @@
 package engine
 
+type moverFunc func(t Tile, i int8) []Tile
+
 func isInBounds(t Tile) bool {
 	return t.X >= 0 && t.Y >= 0 && t.X <= 7 && t.Y <= 7
 }
 
-type predicateFn func(t Tile, i int8) []Tile
-
-func linearPredicate(t Tile, i int8) []Tile {
+func linearMover(t Tile, i int8) []Tile {
 	return []Tile{
 		t.Add(0, i),
 		t.Add(0, -i),
@@ -15,7 +15,7 @@ func linearPredicate(t Tile, i int8) []Tile {
 	}
 }
 
-func diagonalPredicate(t Tile, i int8) []Tile {
+func diagonalMover(t Tile, i int8) []Tile {
 	return []Tile{
 		t.Add(i, i),
 		t.Add(i, -i),
@@ -24,7 +24,7 @@ func diagonalPredicate(t Tile, i int8) []Tile {
 	}
 }
 
-func knightPredicate(t Tile, _ int8) []Tile {
+func knightMover(t Tile, _ int8) []Tile {
 	return []Tile{
 		t.Add(-1, -2),
 		t.Add(-1, 2),
@@ -37,28 +37,7 @@ func knightPredicate(t Tile, _ int8) []Tile {
 	}
 }
 
-func makeForwardPredicate(p Piece) predicateFn {
-	color := p.GetColor()
-	dir := int8(1)
-	if color == Dark {
-		dir = -1
-	}
-
-	return func(t Tile, _ int8) []Tile {
-		moves := []Tile{
-			t.Add(0, dir),
-		}
-
-		if dir == 1 && t.Y == 1 || dir == -1 && t.Y == 6 {
-			moves = append(moves, t.Add(0, dir*2))
-		}
-
-		return moves
-	}
-
-}
-
-func joinPredicate(predicates ...predicateFn) predicateFn {
+func joinPredicate(predicates ...moverFunc) moverFunc {
 	return func(t Tile, i int8) []Tile {
 		moves := []Tile{}
 		for _, p := range predicates {
@@ -68,13 +47,13 @@ func joinPredicate(predicates ...predicateFn) predicateFn {
 	}
 }
 
-func (e Engine) getMoves(t Tile, maxDistance int8, predicate predicateFn) []Tile {
+func (e Engine) getMoves(t Tile, maxDistance int8, moverFn moverFunc) []Tile {
 	moves := []Tile{}
 	blockedDirections := map[int]bool{}
 	sourceColor := e.GetTile(t).GetColor()
 
 	for i := int8(1); i <= maxDistance; i++ {
-		directions := predicate(t, i)
+		directions := moverFn(t, i)
 
 		for i, direction := range directions {
 			if blockedDirections[i] == true {
@@ -91,6 +70,9 @@ func (e Engine) getMoves(t Tile, maxDistance int8, predicate predicateFn) []Tile
 					}
 				}
 
+				// TODO: check if pinned
+				// if collides with own king in one direction
+				// and with a diagonal/linear piece in another
 				moves = append(moves, direction)
 			}
 		}
@@ -99,23 +81,45 @@ func (e Engine) getMoves(t Tile, maxDistance int8, predicate predicateFn) []Tile
 	return moves
 }
 
-func (e Engine) getMovesOnTile(tile Tile) []Tile {
-	figure := e.GetTile(tile)
+func (e Engine) getPawnMoves(t Tile) []Tile {
+	piece := e.GetTile(t)
+	moves := []Tile{}
 
-	switch figure.GetPlain() {
-	case Knight:
-		return e.getMoves(tile, 1, knightPredicate)
-	case King:
-		return e.getMoves(tile, 1, joinPredicate(linearPredicate, diagonalPredicate))
-	case Rook:
-		return e.getMoves(tile, 7, linearPredicate)
-	case Bishop:
-		return e.getMoves(tile, 7, diagonalPredicate)
-	case Queen:
-		return e.getMoves(tile, 7, joinPredicate(linearPredicate, diagonalPredicate))
-	case Pawn:
-		return e.getMoves(tile, 1, makeForwardPredicate(figure.GetColor()))
+	direction := int8(1)
+	if piece.IsDark() {
+		direction = -1
 	}
 
-	return []Tile{}
+	// check if forward possible
+	forward := t.Add(0, direction)
+
+	if e.GetTile(forward) == 0 {
+		moves = append(moves, forward)
+
+		forward2 := t.Add(0, direction*2)
+		if (piece.IsLight() && t.Y == 1) || (piece.IsDark() && t.Y == 6) && e.GetTile(forward2) == 0 {
+			moves = append(moves, forward2)
+		}
+	}
+
+	if t.X >= 1 && t.X <= 6 {
+		forwardLeft := t.Add(-1, direction)
+		forwardRight := t.Add(1, direction)
+
+		if e.GetTile(forwardLeft) != 0 && e.GetTile(forwardLeft).GetColor() != piece.GetColor() {
+			moves = append(moves, forwardLeft)
+		}
+
+		if e.GetTile(forwardRight) != 0 && e.GetTile(forwardRight).GetColor() != piece.GetColor() {
+			moves = append(moves, forwardRight)
+		}
+	}
+
+	// if t.X < 6 && e.GetTile(fr) != 0 && e.GetTile(fr).GetColor() != piece.GetColor() {
+	// 	moves = append(moves, fr)
+	// }
+	// if (piece.IsDark() && t.Y == 6) || (piece.IsLight() && t.Y == 2) {
+	// 	moves = append(moves, t.Add(0, direction), t.Add(0, direction*2))
+	// }
+	return moves
 }

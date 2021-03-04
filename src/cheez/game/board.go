@@ -26,7 +26,7 @@ func getTileFromMousePosition(v pixel.Vec) (uint8, uint8) {
 }
 
 func getTileColor(x, y uint8) pixel.RGBA {
-	isBlack := ((x + y) % 2) >= 1
+	isBlack := ((x + y) % 2) == 0
 	if isBlack {
 		return pixel.RGB(0.0470588235294118, 0.180392156862745, 0.388235294117647)
 	}
