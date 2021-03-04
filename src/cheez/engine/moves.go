@@ -102,24 +102,51 @@ func (e Engine) getPawnMoves(t Tile) []Tile {
 		}
 	}
 
-	if t.X >= 1 && t.X <= 6 {
+	if t.X >= 1 {
 		forwardLeft := t.Add(-1, direction)
-		forwardRight := t.Add(1, direction)
 
 		if e.GetTile(forwardLeft) != 0 && e.GetTile(forwardLeft).GetColor() != piece.GetColor() {
 			moves = append(moves, forwardLeft)
 		}
+	}
+
+	if t.X <= 6 {
+		forwardRight := t.Add(1, direction)
 
 		if e.GetTile(forwardRight) != 0 && e.GetTile(forwardRight).GetColor() != piece.GetColor() {
 			moves = append(moves, forwardRight)
 		}
 	}
 
-	// if t.X < 6 && e.GetTile(fr) != 0 && e.GetTile(fr).GetColor() != piece.GetColor() {
-	// 	moves = append(moves, fr)
-	// }
-	// if (piece.IsDark() && t.Y == 6) || (piece.IsLight() && t.Y == 2) {
-	// 	moves = append(moves, t.Add(0, direction), t.Add(0, direction*2))
-	// }
 	return moves
+}
+
+// GetValidMoves returns all valid moves that can be made on a specific tile,
+// based on what Piece is on that tile
+func (e *Engine) GetValidMoves(tile Tile) []Tile {
+	figure := e.GetTile(tile)
+
+	// TODO:
+	// * handle en-passant
+	// * handle pinning
+	// * handle check (only unpin, king moves allowed)
+
+	if figure.GetColor() == e.UpNext {
+		switch figure.GetPlain() {
+		case Pawn:
+			return e.getPawnMoves(tile)
+		case Knight:
+			return e.getMoves(tile, 1, knightMover)
+		case King:
+			return e.getMoves(tile, 1, joinPredicate(linearMover, diagonalMover))
+		case Rook:
+			return e.getMoves(tile, 7, linearMover)
+		case Bishop:
+			return e.getMoves(tile, 7, diagonalMover)
+		case Queen:
+			return e.getMoves(tile, 7, joinPredicate(linearMover, diagonalMover))
+		}
+	}
+
+	return []Tile{}
 }

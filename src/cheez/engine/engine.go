@@ -55,37 +55,6 @@ func (e *Engine) GetTile(t Tile) Piece {
 	return e.GetPiece(uint8(t.X), uint8(t.Y))
 }
 
-// GetValidMoves returns all valid moves that can be made on a specific tile,
-// based on what Piece is on that tile
-func (e *Engine) GetValidMoves(tile Tile) []Tile {
-	figure := e.GetTile(tile)
-
-	// TODO:
-	// * handle en-passant
-	// * handle pawn takes
-	// * handle pinning
-	// * handle check (only unpin, king moves allowed)
-
-	if figure.GetColor() == e.UpNext {
-		switch figure.GetPlain() {
-		case Pawn:
-			return e.getPawnMoves(tile)
-		case Knight:
-			return e.getMoves(tile, 1, knightMover)
-		case King:
-			return e.getMoves(tile, 1, joinPredicate(linearMover, diagonalMover))
-		case Rook:
-			return e.getMoves(tile, 7, linearMover)
-		case Bishop:
-			return e.getMoves(tile, 7, diagonalMover)
-		case Queen:
-			return e.getMoves(tile, 7, joinPredicate(linearMover, diagonalMover))
-		}
-	}
-
-	return []Tile{}
-}
-
 // MovePiece performs a move of a Piece on Board
 // It confirms that the move is valid, changes which side is up next,
 // and increases any counters and times that it needs to
