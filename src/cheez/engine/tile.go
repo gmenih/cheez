@@ -1,5 +1,7 @@
 package engine
 
+import "strings"
+
 // Tile represents X and Y on the board
 type Tile struct {
 	X uint8
@@ -8,6 +10,22 @@ type Tile struct {
 
 // T is a quick-help function to make a Tile
 func T(x, y uint8) Tile {
+	return Tile{x, y}
+}
+
+// TT is a quick-help function to make a Tile from from chess grid
+// e.g. from a1 to h8
+func TT(tileString string) Tile {
+	if len(tileString) != 2 {
+		panic("Invalid tile string!")
+	}
+
+	s := strings.ToLower(tileString)
+	var x, y uint8
+
+	x = s[0] - 'a'
+	y = s[1] - '1'
+
 	return Tile{x, y}
 }
 

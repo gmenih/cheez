@@ -37,10 +37,10 @@ func knightMover(t Tile, _ int8) []Tile {
 	}
 }
 
-func joinPredicate(predicates ...moverFunc) moverFunc {
+func join(movers ...moverFunc) moverFunc {
 	return func(t Tile, i int8) []Tile {
 		moves := []Tile{}
-		for _, p := range predicates {
+		for _, p := range movers {
 			moves = append(moves, p(t, i)...)
 		}
 		return moves
@@ -97,7 +97,7 @@ func (e Engine) getPawnMoves(t Tile) []Tile {
 		moves = append(moves, forward)
 
 		forward2 := t.Add(0, direction*2)
-		if (piece.IsLight() && t.Y == 1) || (piece.IsDark() && t.Y == 6) && e.GetTile(forward2) == 0 {
+		if ((piece.IsLight() && t.Y == 1) || (piece.IsDark() && t.Y == 6)) && e.GetTile(forward2) == 0 {
 			moves = append(moves, forward2)
 		}
 	}
@@ -139,25 +139,25 @@ func (e *Engine) GetValidMoves(tile Tile) []Tile {
 	figure := e.GetTile(tile)
 
 	// TODO:
-	// * handle en-passant
 	// * handle pinning
 	// * handle check (only unpin, king moves allowed)
-	// * handle castling
 
 	if figure.GetColor() == e.UpNext {
 		switch figure.GetPlain() {
 		case Pawn:
+			// * handle en-passant
 			return e.getPawnMoves(tile)
 		case Knight:
 			return e.getMoves(tile, 1, knightMover)
 		case King:
-			return e.getMoves(tile, 1, joinPredicate(linearMover, diagonalMover))
+			// TODO: handle castling
+			return e.getMoves(tile, 1, join(linearMover, diagonalMover))
 		case Rook:
 			return e.getMoves(tile, 7, linearMover)
 		case Bishop:
 			return e.getMoves(tile, 7, diagonalMover)
 		case Queen:
-			return e.getMoves(tile, 7, joinPredicate(linearMover, diagonalMover))
+			return e.getMoves(tile, 7, join(linearMover, diagonalMover))
 		}
 	}
 

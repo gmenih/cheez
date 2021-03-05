@@ -29,7 +29,7 @@ func NewGame(win *pixelgl.Window) *Game {
 	size := float64(8) * tileSize
 	bounds := pixel.R(0, 0, size, size)
 	return &Game{
-		engine.FENString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").ParseToEngine(),
+		engine.FENString("8/8/8/8/8/4P3/8/8 w - - 0 1").ParseToEngine(),
 
 		newState(),
 
@@ -91,7 +91,6 @@ func (c *Game) Draw() {
 func (g *Game) pickUpFigure(x, y uint8) {
 	fmt.Println("Picking up", x, y)
 	g.state.setDragging(x, y)
-	fmt.Println(g.Engine.Board.ToString())
 }
 
 func (g *Game) dropFigure(x, y uint8) {
