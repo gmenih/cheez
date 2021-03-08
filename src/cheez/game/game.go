@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"gmenih341/cheez/src/cheez/engine"
 
 	"github.com/faiface/pixel"
@@ -29,7 +28,8 @@ func NewGame(win *pixelgl.Window) *Game {
 	size := float64(8) * tileSize
 	bounds := pixel.R(0, 0, size, size)
 	return &Game{
-		engine.FENString("8/8/8/8/8/4P3/8/8 w - - 0 1").ParseToEngine(),
+		engine.NewGameFENString.ParseToEngine(),
+		// engine.FENString("8/3q4/8/8/3Q4/3K4/8/8 w - - 0 1").ParseToEngine(),
 
 		newState(),
 
@@ -89,7 +89,6 @@ func (c *Game) Draw() {
 }
 
 func (g *Game) pickUpFigure(x, y uint8) {
-	fmt.Println("Picking up", x, y)
 	g.state.setDragging(x, y)
 }
 

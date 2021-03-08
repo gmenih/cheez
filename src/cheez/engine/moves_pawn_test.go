@@ -166,6 +166,15 @@ func (s *MovesSuite) TestPawnTakesPinned() {
 	// can move 2 pieces forward
 	assert.Equal(s.T(), 0, len(moves))
 
+	moves = s.validateMovesByFEN(
+		"8/8/8/8/5q2/8/3P4/2K5 w - - 0 1",
+		engine.TT("e3"),
+		[]engine.Tile{},
+	)
+
+	// can move 2 pieces forward
+	assert.Equal(s.T(), 0, len(moves))
+
 	// can take if it clears the pin
 	moves = s.validateMovesByFEN(
 		"8/8/8/8/5q2/4P3/8/2K5 w - - 0 1",

@@ -1,79 +1,137 @@
 package engine
 
+import (
+	"math"
+)
+
 type moverFunc func(t Tile, i int8) []Tile
 
 func isInBounds(t Tile) bool {
 	return t.X >= 0 && t.Y >= 0 && t.X <= 7 && t.Y <= 7
 }
 
-func linearMover(t Tile, i int8) []Tile {
+func genericMover(tile Tile, mul int8, num int8, angleDiff float64) []Tile {
+	moves := []Tile{}
+	delta := math.Pi/(float64(num)/2) + angleDiff
+
+	for i := float64(0); i < float64(num); i++ {
+		x := int8(math.Round(math.Cos(delta*i))) * mul
+		y := int8(math.Round(math.Sin(delta*i))) * mul
+
+		moves = append(moves, tile.Add(x, y))
+	}
+
+	return moves
+}
+
+func linearMover(tile Tile, mul int8) []Tile {
+	return genericMover(tile, mul, 4, 0)
+}
+
+func diagonalMover(tile Tile, mul int8) []Tile {
+	return genericMover(tile, mul, 4, math.Pi/4)
+}
+
+func omniDirectionalMover(tile Tile, mul int8) []Tile {
+	return genericMover(tile, mul, 8, 0)
+}
+
+func knightMover(tile Tile, _ int8) []Tile {
 	return []Tile{
-		t.Add(0, i),
-		t.Add(0, -i),
-		t.Add(-i, 0),
-		t.Add(i, 0),
+		tile.Add(-1, -2),
+		tile.Add(-1, 2),
+		tile.Add(-2, -1),
+		tile.Add(-2, 1),
+		tile.Add(1, -2),
+		tile.Add(1, 2),
+		tile.Add(2, -1),
+		tile.Add(2, 1),
 	}
 }
 
-func diagonalMover(t Tile, i int8) []Tile {
-	return []Tile{
-		t.Add(i, i),
-		t.Add(i, -i),
-		t.Add(-i, i),
-		t.Add(-i, -i),
-	}
-}
+func intersectMoves(movesA []Tile, movesB []Tile) []Tile {
+	intersection := []Tile{}
 
-func knightMover(t Tile, _ int8) []Tile {
-	return []Tile{
-		t.Add(-1, -2),
-		t.Add(-1, 2),
-		t.Add(-2, -1),
-		t.Add(-2, 1),
-		t.Add(1, -2),
-		t.Add(1, 2),
-		t.Add(2, -1),
-		t.Add(2, 1),
-	}
-}
-
-func join(movers ...moverFunc) moverFunc {
-	return func(t Tile, i int8) []Tile {
-		moves := []Tile{}
-		for _, p := range movers {
-			moves = append(moves, p(t, i)...)
+	for _, a := range movesA {
+		for _, b := range movesB {
+			if a.Equals(b) {
+				intersection = append(intersection, b)
+			}
 		}
-		return moves
 	}
+
+	return intersection
 }
 
-func (e Engine) getMoves(t Tile, maxDistance int8, moverFn moverFunc) []Tile {
+func (e Engine) filterPinnedMoves(tile Tile, moves []Tile) []Tile {
+	sourcePiece := e.GetTile(tile)
+	kingDirection := int8(-1)
+	blockedDirections := map[int]bool{}
+	directionEnemies := map[int]Piece{}
+	moveMap := map[int][]Tile{}
+
+	for i := int8(1); i < 7; i++ {
+		directions := omniDirectionalMover(tile, i)
+
+		for dIndex, direction := range directions {
+			if blockedDirections[dIndex] == true {
+				continue
+			}
+
+			if isInBounds(direction) {
+				targetPiece := e.GetTile(direction)
+				moveMap[dIndex] = append(moveMap[dIndex], direction)
+
+				if targetPiece != 0 {
+					blockedDirections[dIndex] = true
+
+					if targetPiece.GetColor() != sourcePiece.GetColor() {
+						directionEnemies[dIndex] = targetPiece.GetPlain()
+						continue
+					} else if targetPiece.GetPlain() == King {
+						kingDirection = int8(dIndex)
+					}
+				}
+			}
+		}
+	}
+
+	if kingDirection != -1 {
+		oppositeDirection := ((kingDirection + 8) - 4) % 8
+		if v, ok := directionEnemies[int(oppositeDirection)]; ok && v == Queen || v == Bishop || v == Rook {
+			return intersectMoves(moves, append(moveMap[int(oppositeDirection)], moveMap[int(kingDirection)]...))
+		}
+	}
+
+	return moves
+}
+
+func (e Engine) getMoves(tile Tile, maxDistance int8, moverFn moverFunc) []Tile {
 	moves := []Tile{}
 	blockedDirections := map[int]bool{}
-	sourceColor := e.GetTile(t).GetColor()
+	sourceColor := e.GetTile(tile).GetColor()
 
 	for i := int8(1); i <= maxDistance; i++ {
-		directions := moverFn(t, i)
+		directions := moverFn(tile, i)
 
-		for i, direction := range directions {
-			if blockedDirections[i] == true {
+		for dIndex, direction := range directions {
+			if blockedDirections[dIndex] == true {
 				continue
 			}
 
 			if isInBounds(direction) {
 				targetColor := e.GetTile(direction).GetColor()
 				if targetColor != 0 {
-					blockedDirections[i] = true
+					blockedDirections[dIndex] = true
 
 					if targetColor == sourceColor {
 						continue
 					}
 				}
 
-				// TODO: check if pinned
-				// if collides with own king in one direction
-				// and with a diagonal/linear piece in another
 				moves = append(moves, direction)
+			} else {
+				blockedDirections[dIndex] = true
 			}
 		}
 	}
@@ -81,8 +139,9 @@ func (e Engine) getMoves(t Tile, maxDistance int8, moverFn moverFunc) []Tile {
 	return moves
 }
 
-func (e Engine) getPawnMoves(t Tile) []Tile {
-	piece := e.GetTile(t)
+func (e Engine) getPawnMoves(tile Tile) []Tile {
+	// TODO: handle en passant
+	piece := e.GetTile(tile)
 	moves := []Tile{}
 
 	direction := int8(1)
@@ -91,27 +150,27 @@ func (e Engine) getPawnMoves(t Tile) []Tile {
 	}
 
 	// check if forward possible
-	forward := t.Add(0, direction)
+	forward := tile.Add(0, direction)
 
 	if e.GetTile(forward) == 0 {
 		moves = append(moves, forward)
 
-		forward2 := t.Add(0, direction*2)
-		if ((piece.IsLight() && t.Y == 1) || (piece.IsDark() && t.Y == 6)) && e.GetTile(forward2) == 0 {
+		forward2 := tile.Add(0, direction*2)
+		if ((piece.IsLight() && tile.Y == 1) || (piece.IsDark() && tile.Y == 6)) && e.GetTile(forward2) == 0 {
 			moves = append(moves, forward2)
 		}
 	}
 
-	if t.X >= 1 {
-		forwardLeft := t.Add(-1, direction)
+	if tile.X >= 1 {
+		forwardLeft := tile.Add(-1, direction)
 
 		if e.GetTile(forwardLeft) != 0 && e.GetTile(forwardLeft).GetColor() != piece.GetColor() {
 			moves = append(moves, forwardLeft)
 		}
 	}
 
-	if t.X <= 6 {
-		forwardRight := t.Add(1, direction)
+	if tile.X <= 6 {
+		forwardRight := tile.Add(1, direction)
 
 		if e.GetTile(forwardRight) != 0 && e.GetTile(forwardRight).GetColor() != piece.GetColor() {
 			moves = append(moves, forwardRight)
@@ -121,11 +180,11 @@ func (e Engine) getPawnMoves(t Tile) []Tile {
 	return moves
 }
 
-func (e *Engine) isValidMove(from, to Tile) bool {
+func (e Engine) isValidMove(from, to Tile) bool {
 	moves := e.GetValidMoves(from)
 
-	for _, t := range moves {
-		if t.Equals(to) {
+	for _, tile := range moves {
+		if tile.Equals(to) {
 			return true
 		}
 	}
@@ -133,33 +192,37 @@ func (e *Engine) isValidMove(from, to Tile) bool {
 	return false
 }
 
-// GetValidMoves returns all valid moves that can be made on a specific tile,
-// based on what Piece is on that tile
-func (e *Engine) GetValidMoves(tile Tile) []Tile {
-	figure := e.GetTile(tile)
+func (e Engine) getMovesByPiece(tile Tile) []Tile {
+	piece := e.GetTile(tile)
 
-	// TODO:
-	// * handle pinning
-	// * handle check (only unpin, king moves allowed)
-
-	if figure.GetColor() == e.UpNext {
-		switch figure.GetPlain() {
+	if piece.GetColor() == e.UpNext {
+		switch piece.GetPlain() {
 		case Pawn:
-			// * handle en-passant
 			return e.getPawnMoves(tile)
 		case Knight:
 			return e.getMoves(tile, 1, knightMover)
 		case King:
 			// TODO: handle castling
-			return e.getMoves(tile, 1, join(linearMover, diagonalMover))
+			return e.getMoves(tile, 1, omniDirectionalMover)
 		case Rook:
 			return e.getMoves(tile, 7, linearMover)
 		case Bishop:
 			return e.getMoves(tile, 7, diagonalMover)
 		case Queen:
-			return e.getMoves(tile, 7, join(linearMover, diagonalMover))
+			return e.getMoves(tile, 7, omniDirectionalMover)
 		}
 	}
 
 	return []Tile{}
+}
+
+// GetValidMoves returns all valid moves that can be made on a specific tile,
+// based on what Piece is on that tile
+func (e *Engine) GetValidMoves(tile Tile) []Tile {
+	moves := e.getMovesByPiece(tile)
+	moves = e.filterPinnedMoves(tile, moves)
+	// TODO:
+	// * handle check (only unpin, king moves allowed)
+
+	return moves
 }

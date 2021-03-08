@@ -40,3 +40,10 @@ func (t Tile) Add(dX, dY int8) Tile {
 		uint8(int8(t.Y) + dY),
 	}
 }
+
+func (t Tile) AddTile(t2 Tile) Tile {
+	return Tile{
+		t.X + t2.X,
+		t.Y + t2.Y,
+	}
+}
